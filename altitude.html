@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="de">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+		<title>Pressure & Density Altitude Calculator</title>
+	</head>
+	<body onload="loadUnits()">
+	
+		<div class="container">
+			<div class="row py-4">
+				<div class="col">
+					<h1 class="display-6 text-center" id="caption">Pressure & Density Altitude Calculator</h1>
+				</div>
+			</div>
+			<div class="row justify-content-center align-items-center">
+				<div class="col-auto">
+					<form id="calculation" oninput="calculateAltitude()">
+						<div class="row mb-3">
+							<label for="elevationInput" class="form-label">Elevation:</label>
+							<div class="input-group">
+								<input type="number" class="form-control" id="elevationInput" value="0">
+								<select class="form-select" id="elevationUnit"></select>
+							</div>
+						</div>
+						<div class="row mb-3">
+							<label for="temperatureInput" class="form-label">Temperature:</label>							
+							<div class="input-group">
+								<input type="number" class="form-control" id="temperatureInput" value="15">
+								<select class="form-select" id="temperatureUnit"></select>
+							</div>
+						</div>
+						<div class="row mb-3">
+							<label for="pressureInput" class="form-label">Pressure:</label>
+							<div class="input-group">
+								<input type="number" class="form-control" id="pressureInput" value="1013.25">
+								<select class="form-select" id="pressureUnit"></select>
+							</div>
+						</div>
+						<hr/>
+						<div class="row mb-3">
+							<label for="pressureAltitude" class="form-label">Pressure altitude:</label>							
+							<div class="input-group">
+								<input type="text" class="form-control" id="pressureAltitude" value="0" readonly>
+								<span class="input-group-text" id="pressureAltitudeUnit">ft</span>
+							</div>
+						</div>
+						<div class="row mb-3">
+							<label for="densityAltitude" class="form-label">Density altitude:</label>							
+							<div class="input-group">
+								<input type="text" class="form-control" id="densityAltitude" value="0" readonly>
+								<span class="input-group-text" id="densityAltitudeUnit">ft</span>
+							</div>
+						</div>
+					</form>
+				</div>
+			</div>
+		</div>
+		
+		<script type="text/javascript">
+
+"use strict";
+
+function loadUnits() {
+	populateUnitSelector(document.getElementById("elevationUnit"), Elevation.SupportedUnits);
+	populateUnitSelector(document.getElementById("temperatureUnit"), Temperature.SupportedUnits);
+	populateUnitSelector(document.getElementById("pressureUnit"), Pressure.SupportedUnits);
+}
+
+function populateUnitSelector(node, units) {
+	units.forEach(function(unit) {
+		let opt = document.createElement("option");
+		let value = document.createTextNode(unit);
+		opt.appendChild(value);
+		node.appendChild(opt);
+	});
+}
+
+//---------------------------------------------------------------------------//
+
+function calculateAltitude() {
+	const elevation = new Elevation(getElementValue("elevationInput"), getSelectedValue("elevationUnit"));
+	const temperature = new Temperature(getElementValue("temperatureInput"), getSelectedValue("temperatureUnit"));
+	const pressure = new Pressure(getElementValue("pressureInput"), getSelectedValue("pressureUnit"), elevation);
+	
+	const pressureAltitude = calculatePressureAltitude(pressure, elevation);
+	const densityAltitude = calculateDensityAltitude(pressureAltitude, elevation, temperature);
+	
+	document.getElementById("pressureAltitude").value = pressureAltitude.toTargetUnit(elevation.unit());
+	document.getElementById("densityAltitude").value = densityAltitude.toTargetUnit(elevation.unit());
+	
+	document.getElementById("pressureAltitudeUnit").textContent = elevation.unit();	
+	document.getElementById("densityAltitudeUnit").textContent = elevation.unit();
+}
+
+//---------------------------------------------------------------------------//
+
+function calculatePressureAltitude(pressure, elevation) {
+	return new Elevation(elevation.ft() + 27 * (Pressure.ISA - pressure.hPa_QNH()), "ft");
+}
+
+function calculateDensityAltitude(pressureAltitude, elevation, temperature) {
+	let localStandardTemp = Temperature.ISA - elevation.ft() / 1000 * 2;
+	return new Elevation(pressureAltitude.ft() + 120 * (temperature.C() - localStandardTemp), "ft");
+}
+
+function getElementValue(elementID) {
+	return document.getElementById(elementID).value;
+}
+
+function getSelectedValue(elementID) {
+	return document.getElementById(elementID).selectedOptions[0].text;
+}
+
+//---------------------------------------------------------------------------//
+
+class Elevation {	
+	static SupportedUnits = [ "ft", "m" ];
+	
+	constructor(value, unit) {
+		this._unit = unit;
+		if (this._unit == null || !Elevation.SupportedUnits.includes(this._unit)) {
+			this._unit = Elevation.SupportedUnits[0];
+		}
+		
+		const parsedValue = (typeof value === "number") ? value : parseFloat(value);
+		
+		this._m = (this._unit === Elevation.SupportedUnits[0]) ? (parsedValue * 0.3048) : parsedValue;
+		this._ft = (this._unit === Elevation.SupportedUnits[1]) ? (parsedValue / 0.3048) : parsedValue;
+	}
+	
+	m() { return this._m; }
+	ft() { return this._ft; }
+	unit() { return this._unit; }
+	
+	toTargetUnit(unit) {
+		return (unit === Elevation.SupportedUnits[0]) ? Math.round(this._ft) : Math.round(this._m * 10) / 10;
+	}
+}
+
+//---------------------------------------------------------------------------//
+
+class Temperature {
+	static SupportedUnits = [ "°C", "°F" ];
+	static ISA = 15.0;
+
+	constructor(value, unit) {
+		this._unit = unit;
+		if (this._unit == null || !Temperature.SupportedUnits.includes(this._unit)) {
+			this._unit = Temperature.SupportedUnits[0];
+		}
+		
+		const parsedValue = (typeof value === "number") ? value : parseFloat(value);
+		
+		this._f = (this._unit === Temperature.SupportedUnits[0]) ? ((parsedValue * 1.8 + 32)) : parsedValue;
+		this._c = (this._unit === Temperature.SupportedUnits[1]) ? ((parsedValue - 32) / 1.8) : parsedValue;
+	}
+		
+	C() { return Math.round(this._c * 100) / 100; }	// Preserve two decimals precision
+	F() { return Math.round(this._f * 100) / 100; }
+}
+
+//---------------------------------------------------------------------------//
+
+class Pressure {
+	static SupportedUnits = [ "hPa (QNH)", "in Hg (QNH)", "hPa (QFE)", "in Hg (QFE)" ];
+	static ISA = 1013.25;
+
+	constructor (value, unit, elevation) {
+		if (unit == null || !Pressure.SupportedUnits.includes(unit)) {
+			unit = Pressure.SupportedUnits[0];
+		}
+		
+		if (elevation == null) {
+			elevation = new Elevation(0);
+		}
+		this._barometricScaleFactor = elevation.ft() / 27;
+		
+		const parsedValue = (typeof value === "number") ? value : parseFloat(value);
+		
+		if (unit === Pressure.SupportedUnits[0]) {		// hPa (QNH)
+			this._hPa_QNH = parsedValue;
+		}
+		else if (unit === Pressure.SupportedUnits[1]) {	// in Hg (QNH)
+			this._hPa_QNH = inHg_to_hPa(parsedValue);
+		}
+		else if (unit === Pressure.SupportedUnits[2]) {	// hPa (QFE)
+			this._hPa_QNH = parsedValue + this._barometricScaleFactor;
+		}
+		else if (unit === Pressure.SupportedUnits[3]) {	// in Hg (QFE)
+			this._hPa_QNH = inHg_to_hPa(parsedValue) + this._barometricScaleFactor;
+		}
+	}
+		
+	hPa_QNH() { return this._hPa_QNH; }
+	inHg_QNH() { return hPa_to_inHg(this._hPa_QNH); }
+
+	static hPa_to_inHg(value) {
+		return value * (76000 / 25.4) / 101325;
+	}
+
+	static inHg_to_hPa(value) {
+		return value / (76000 / 25.4) * 101325;
+	}
+}
+
+		</script>
+		
+	</body>
+</html>
