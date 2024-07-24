@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="de">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+		<title>Unit converters</title>
+	</head>
+	<body onload="initConverters()">
+	
+		<div class="container">
+			<div class="row py-4">
+				<div class="col">
+					<h1 class="display-6 text-center" id="caption">Unit converters</h1>
+				</div>
+			</div>
+			<div class="row justify-content-center align-items-center">
+				<div class="col-auto">
+					<form>
+						<div class="row mb-3">
+							<label class="form-label" for="degreesCentigrade">Temperature:</label>
+							<div class="col">
+								<div class="input-group">
+									<input type="number" class="form-control" id="degreesCentigrade">
+									<span class="input-group-text">&deg;C</span>
+								</div>
+							</div>
+							<div class="col">
+								<div class="input-group">
+									<input type="number" class="form-control" id="degreesFahrenheit">
+									<span class="input-group-text">&deg;F</span>
+								</div>
+							</div>
+						</div>
+					</form>
+					
+					<form>
+						<div class="row mb-3">
+							<label class="form-label" for="hectoPascal">Pressure:</label>
+							<div class="col">
+								<div class="input-group">
+									<input type="number" class="form-control" id="hectoPascal">
+									<span class="input-group-text">hPa</span>
+								</div>
+							</div>
+							<div class="col">
+								<div class="input-group">
+									<input type="number" class="form-control" id="inchesHg">
+									<span class="input-group-text">in Hg</span>
+								</div>
+							</div>
+						</div>
+					</form>
+					
+					<form>
+						<div class="row mb-3">
+							<label class="form-label" for="kilometers">Distance:</label>
+							<div class="col">
+								<div class="input-group">
+									<input type="number" class="form-control" id="kilometers">
+									<span class="input-group-text">km</span>
+								</div>
+							</div>
+							<div class="col">
+								<div class="input-group">
+									<input type="number" class="form-control" id="nauticalMiles">
+									<span class="input-group-text">NM</span>
+								</div>
+							</div>
+						</div>
+					</form>
+					
+					<form>
+						<div class="row mb-3">
+							<label class="form-label" for="meters">Height:</label>
+							<div class="col">
+								<div class="input-group">
+									<input type="number" class="form-control" id="meters">
+									<span class="input-group-text">m</span>
+								</div>
+							</div>
+							<div class="col">
+								<div class="input-group">
+									<input type="number" class="form-control" id="feet">
+									<span class="input-group-text">ft</span>
+								</div>
+							</div>
+						</div>
+					</form>
+					
+					<form>
+						<div class="row mb-3">
+							<label class="form-label" for="kilometersPerHour">Speed:</label>
+							<div class="col">
+								<div class="input-group">
+									<input type="number" class="form-control" id="kilometersPerHour">
+									<span class="input-group-text">km/h</span>
+								</div>
+							</div>
+							<div class="col">
+								<div class="input-group">
+									<input type="number" class="form-control" id="knots">
+									<span class="input-group-text">kts</span>
+								</div>
+							</div>
+						</div>
+					</form>
+					
+					<form>
+						<div class="row mb-3">
+							<label class="form-label" for="metersPerSecond">Vertical speed:</label>
+							<div class="col">
+								<div class="input-group">
+									<input type="number" class="form-control" id="metersPerSecond">
+									<span class="input-group-text">m/s</span>
+								</div>
+							</div>
+							<div class="col">
+								<div class="input-group">
+									<input type="number" class="form-control" id="feetPerMinute">
+									<span class="input-group-text">ft/min</span>
+								</div>
+							</div>
+						</div>
+					</form>
+					
+				</div>
+			</div>
+		</div>
+		
+		<script type="text/javascript">
+
+"use strict";
+
+function initConverters() {
+	const converters = [		
+		new UnitConverter("degreesCentigrade", "degreesFahrenheit", UnitConverter.C_to_F, UnitConverter.F_to_C, 1, 1),
+		new UnitConverter("hectoPascal", "inchesHg", UnitConverter.hPa_to_inHg, UnitConverter.inHg_to_hPa),
+		new UnitConverter("kilometers", "nauticalMiles", UnitConverter.km_to_NM, UnitConverter.NM_to_km),
+		new UnitConverter("meters", "feet", UnitConverter.m_to_ft, UnitConverter.ft_to_m),
+		new UnitConverter("kilometersPerHour", "knots", UnitConverter.km_to_NM, UnitConverter.NM_to_km, 0, 0),
+		new UnitConverter("metersPerSecond", "feetPerMinute", UnitConverter.ms_to_fpm, UnitConverter.fpm_to_ms, 2, 0),
+	];
+}
+
+Object.prototype.getElementValue = function() {
+	const invalidClassName = "is-invalid";
+	if (this.checkValidity()) {
+		this.classList.remove(invalidClassName);
+	}
+	else {
+		this.classList.add(invalidClassName);	
+	}
+	const value = parseFloat(this.value);
+	return isNaN(value) ? 0.0 : value;
+}
+
+Object.prototype.setElementValue = function(value, decimalPlaces) {
+	const x = Math.pow(10, decimalPlaces);
+	this.value = Math.round(x * value) / x;
+}
+
+class UnitConverter {
+	constructor(domElementIdA, domElementIdB, conversionA2B, conversionB2A, precisionA, precisionB) {
+		const _defaultPrecision = 2;
+		const _precisionA = (precisionA == null) ? _defaultPrecision : precisionA;
+		const _precisionB = (precisionB == null) ? _defaultPrecision : precisionB;
+		
+		this.elementA = document.getElementById(domElementIdA);
+		this.elementB = document.getElementById(domElementIdB);
+		
+		if (conversionA2B == null || conversionB2A == null || this.elementA == null || this.elementB == null) {
+			console.log("initialization error");
+			return;
+		}
+		
+		this.elementA.oninput = () => {
+			const a = this.elementA.getElementValue();
+			this.elementB.setElementValue(conversionA2B(a), _precisionB);
+		}
+		
+		this.elementB.oninput = () => {
+			const b = this.elementB.getElementValue();
+			this.elementA.setElementValue(conversionB2A(b), _precisionA);
+		}
+	}
+	
+	static C_to_F(x) { return x * 1.8 + 32; }
+	static F_to_C(x) { return (x - 32) / 1.8; }
+	
+	static hPa_to_inHg(x) { return x * (76000 / 25.4) / 101325; }
+	static inHg_to_hPa(x) { return x / (76000 / 25.4) * 101325; }
+	
+	static km_to_NM(x) { return x / 1.852; }
+	static NM_to_km(x) { return x * 1.852; }
+	
+	static m_to_ft(x) { return x / 0.3048; }
+	static ft_to_m(x) { return x * 0.3048; }
+	
+	static ms_to_fpm(x) { return 60 * x / 0.3048; }
+	static fpm_to_ms(x) { return x / 60 * 0.3048; }
+}
+
+		</script>
+		
+	</body>
+</html>
