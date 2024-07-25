@@ -54,6 +54,42 @@
 					
 					<form>
 						<div class="row mb-3">
+							<label class="form-label" for="liter">Volume:</label>
+							<div class="col">
+								<div class="input-group">
+									<input type="number" class="form-control" id="liter">
+									<span class="input-group-text">l</span>
+								</div>
+							</div>
+							<div class="col">
+								<div class="input-group">
+									<input type="number" class="form-control" id="usGallons">
+									<span class="input-group-text">US-gal</span>
+								</div>
+							</div>
+						</div>
+					</form>
+					
+					<form>
+						<div class="row mb-3">
+							<label class="form-label" for="kilogram">Mass:</label>
+							<div class="col">
+								<div class="input-group">
+									<input type="number" class="form-control" id="kilogram">
+									<span class="input-group-text">kg</span>
+								</div>
+							</div>
+							<div class="col">
+								<div class="input-group">
+									<input type="number" class="form-control" id="pounds">
+									<span class="input-group-text">lbs</span>
+								</div>
+							</div>
+						</div>
+					</form>
+					
+					<form>
+						<div class="row mb-3">
 							<label class="form-label" for="kilometers">Distance:</label>
 							<div class="col">
 								<div class="input-group">
@@ -136,6 +172,8 @@ function initConverters() {
 	const converters = [		
 		new UnitConverter("degreesCentigrade", "degreesFahrenheit", UnitConverter.C_to_F, UnitConverter.F_to_C, 1, 1),
 		new UnitConverter("hectoPascal", "inchesHg", UnitConverter.hPa_to_inHg, UnitConverter.inHg_to_hPa),
+		new UnitConverter("liter", "usGallons", UnitConverter.l_to_usgal, UnitConverter.usgal_to_l, 1, 1),
+		new UnitConverter("kilogram", "pounds", UnitConverter.kg_to_lbs, UnitConverter.lbs_to_kg, 1, 1),
 		new UnitConverter("kilometers", "nauticalMiles", UnitConverter.km_to_NM, UnitConverter.NM_to_km),
 		new UnitConverter("meters", "feet", UnitConverter.m_to_ft, UnitConverter.ft_to_m),
 		new UnitConverter("kilometersPerHour", "knots", UnitConverter.km_to_NM, UnitConverter.NM_to_km, 0, 0),
@@ -190,6 +228,12 @@ class UnitConverter {
 	
 	static hPa_to_inHg(x) { return x * (76000 / 25.4) / 101325; }
 	static inHg_to_hPa(x) { return x / (76000 / 25.4) * 101325; }
+	
+	static l_to_usgal(x) { return x * 0.2642; }
+	static usgal_to_l(x) { return x * 3.785; }
+	
+	static kg_to_lbs(x) { return x * 2.2046; }
+	static lbs_to_kg(x) { return x * 0.4536; }
 	
 	static km_to_NM(x) { return x / 1.852; }
 	static NM_to_km(x) { return x * 1.852; }
