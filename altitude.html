@@ -85,7 +85,7 @@ function calculateAltitude() {
 	const pressure = new Pressure(getElementValue("pressureInput"), getSelectedValue("pressureUnit"), elevation);
 	
 	const pressureAltitude = calculatePressureAltitude(pressure, elevation);
-	const densityAltitude = calculateDensityAltitude(pressureAltitude, elevation, temperature);
+	const densityAltitude = calculateDensityAltitude(pressureAltitude, temperature);
 	
 	document.getElementById("pressureAltitude").value = pressureAltitude.toTargetUnit(elevation.unit());
 	document.getElementById("densityAltitude").value = densityAltitude.toTargetUnit(elevation.unit());
@@ -100,8 +100,8 @@ function calculatePressureAltitude(pressure, elevation) {
 	return new Elevation(elevation.ft() + 27 * (Pressure.ISA - pressure.hPa_QNH()), "ft");
 }
 
-function calculateDensityAltitude(pressureAltitude, elevation, temperature) {
-	let localStandardTemp = Temperature.ISA - elevation.ft() / 1000 * 2;
+function calculateDensityAltitude(pressureAltitude, temperature) {
+	let localStandardTemp = Temperature.ISA - pressureAltitude.ft() / 1000 * 2;
 	return new Elevation(pressureAltitude.ft() + 120 * (temperature.C() - localStandardTemp), "ft");
 }
 
