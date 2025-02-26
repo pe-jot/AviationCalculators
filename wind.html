@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="de">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+		<title>Wind Vector Calculator</title>
+	</head>
+	<body>
+	
+		<div class="container">
+			<div class="row py-4">
+				<div class="col">
+					<h1 class="display-6 text-center" id="caption">Wind Vector Calculator</h1>
+				</div>
+			</div>
+			<div class="row justify-content-center align-items-center">
+				<div class="col-auto">
+					<form id="calculation" oninput="calculateWind()">
+						<div class="row mb-3">
+							<label for="windSpeed" class="form-label">Wind:</label>
+							<div class="input-group">
+								<span class="input-group-text">Spd:</span>
+								<input type="number" class="form-control" id="windSpeed" value="0">
+								<span class="input-group-text">Dir:</span>
+								<input type="number" class="form-control" id="windDirection" value="0">
+							</div>
+						</div>
+						<div class="row mb-3">
+							<label for="speed" class="form-label">Aircraft:</label>							
+							<div class="input-group">
+								<span class="input-group-text">TAS:</span>
+								<input type="number" class="form-control" id="speed" value="0">
+								<span class="input-group-text">HDG:</span>
+								<input type="number" class="form-control" id="heading" value="0">
+							</div>
+						</div>
+						<hr/>
+						<div class="row mb-3">
+							<label for="headwind" class="form-label">Wind components:</label>							
+							<div class="input-group">
+								<span class="input-group-text">Head:</span>
+								<input type="text" class="form-control" id="headwind" value="0" readonly>
+								<span class="input-group-text">Cross:</span>
+								<input type="text" class="form-control" id="crosswind" value="0" readonly>
+							</div>
+						</div>
+						<div class="row mb-3">
+							<label for="groundSpeed" class="form-label">Course:</label>							
+							<div class="input-group">
+								<span class="input-group-text">GS:</span>
+								<input type="text" class="form-control" id="groundSpeed" value="0" readonly>
+								<span class="input-group-text">CSE:</span>
+								<input type="number" class="form-control" id="course" value="0">
+							</div>
+						</div>
+					</form>
+				</div>
+			</div>
+		</div>
+		
+		<p class="fixed-bottom text-center">
+			<a href="https://github.com/pe-jot/AviationCalculators">Visit Github repository</a>
+		</p>
+		
+		<script type="text/javascript">
+
+"use strict";
+
+//---------------------------------------------------------------------------//
+
+Object.prototype.getElementValue = function() {
+	const invalidClassName = "is-invalid";
+	if (this.checkValidity()) {
+		this.classList.remove(invalidClassName);
+	}
+	else {
+		this.classList.add(invalidClassName);	
+	}
+	const value = parseFloat(this.value);
+	return isNaN(value) ? 0.0 : value;
+}
+
+Object.prototype.setElementValue = function(value, decimalPlaces) {
+	const x = Math.pow(10, decimalPlaces);
+	this.value = Math.round(x * value) / x;
+}
+
+//---------------------------------------------------------------------------//
+
+function calculateWind() {
+	const windSpeed = document.getElementById("windSpeed").getElementValue();
+	const windDirection = document.getElementById("windDirection").getElementValue();
+	const tas = document.getElementById("speed").getElementValue();
+	const hdg = document.getElementById("heading").getElementValue();
+	
+	const alphaRad = (windDirection - hdg) * Math.PI / 180;
+	const crosswind = windSpeed * Math.sin(alphaRad);
+	const headwind = windSpeed * Math.cos(alphaRad);
+	
+	document.getElementById("headwind").setElementValue(headwind, 1);
+	document.getElementById("crosswind").setElementValue(crosswind, 1);
+	
+	if (tas > 0) {	
+		const delta = Math.atan(crosswind / (tas - headwind)) * 180 / Math.PI;
+		const cse = hdg + delta;
+		const gs = Math.sqrt(Math.pow(crosswind, 2) + Math.pow((tas - headwind), 2));
+		
+		document.getElementById("groundSpeed").setElementValue(gs, 1);
+		document.getElementById("course").setElementValue(cse, 0);
+	}
+}
+
+		</script>
+		
+	</body>
+</html>
