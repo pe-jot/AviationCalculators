@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="de">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+		<title>Windchill Calculator</title>
+	</head>
+	<body onload="loadUnits()">
+	
+		<div class="container mb-4">
+			<div class="row py-4">
+				<div class="col">
+					<h1 class="display-6 text-center" id="caption">Windchill Calculator</h1>
+				</div>
+			</div>
+			<div class="row justify-content-center align-items-center">
+				<div class="col-auto">
+					<form id="calculation" oninput="process()">
+						<div class="row mb-3">
+							<label for="temperatureInput" class="form-label">Temperature:</label>
+							<div class="input-group">
+								<input type="number" step="any" class="form-control" id="temperatureInput" value="15">
+								<select class="form-select" id="temperatureUnit"></select>
+							</div>
+						</div>
+						<div class="row mb-3">
+							<label for="windspeedInput" class="form-label">Wind speed:</label>
+							<div class="input-group">
+								<input type="number" step="any" class="form-control" id="windspeedInput" value="0">
+								<select class="form-select" id="windspeedUnit"></select>
+							</div>
+						</div>
+						<hr/>
+						<div class="row mb-3">
+							<label for="windchillTemperature" class="form-label">Windchill temperature:</label>
+							<div class="input-group">
+								<input type="text" class="form-control" id="windchillTemperature" value="0" readonly>
+								<span class="input-group-text" id="windchillTemperatureUnit">°C</span>
+							</div>
+						</div>
+					</form>
+				</div>
+			</div>
+		</div>
+		
+		<footer class="footer fixed-bottom text-center pb-2 bg-body">
+			<a href="https://github.com/pe-jot/AviationCalculators">Visit Github repository</a>
+		</footer>
+		
+		<script type="text/javascript">
+
+"use strict";
+
+function loadUnits() {
+	populateUnitSelector(document.getElementById("temperatureUnit"), Temperature.SupportedUnits);
+	populateUnitSelector(document.getElementById("windspeedUnit"), Windspeed.SupportedUnits);
+}
+
+function populateUnitSelector(node, units) {
+	units.forEach(function(unit) {
+		let opt = document.createElement("option");
+		let value = document.createTextNode(unit);
+		opt.appendChild(value);
+		node.appendChild(opt);
+	});
+}
+
+//---------------------------------------------------------------------------//
+
+function process() {
+	const temperature = new Temperature(getElementValue("temperatureInput"), getSelectedValue("temperatureUnit"));	
+	const windspeed = new Windspeed(getElementValue("windspeedInput"), getSelectedValue("windspeedUnit"));	
+	
+	const windchill = new Temperature(calculateWindchill(temperature.C(), windspeed.kmh()), Temperature.SupportedUnits[0]);
+	
+	document.getElementById("windchillTemperature").value = windchill.toTargetUnit(temperature.unit());
+	document.getElementById("windchillTemperatureUnit").textContent = temperature.unit();
+}
+
+// Calculates windchill from temperature [°C] and wind speed [km/h]
+function calculateWindchill(temperature, windspeed) {	
+	// https://de.wikipedia.org/wiki/Windchill#Aktuelle_Berechnung_und_Tabelle
+	if (temperature > 10.0 || windspeed < 5.0) {
+		return temperature;
+	}
+	
+	let tWind = 13.12 + 0.6215 * temperature + (0.3965 * temperature - 11.37) * Math.pow(windspeed, 0.16);
+	return tWind;
+}
+
+//---------------------------------------------------------------------------//
+
+function getElementValue(elementID) {
+	return document.getElementById(elementID).value;
+}
+
+function getSelectedValue(elementID) {
+	return document.getElementById(elementID).selectedOptions[0].text;
+}
+
+//---------------------------------------------------------------------------//
+
+class Windspeed {	
+	static SupportedUnits = [ "kt", "m/s", "km/h", "mph" ];
+	
+	constructor(value, unit) {
+		this._unit = unit;
+		if (this._unit == null || !Windspeed.SupportedUnits.includes(this._unit)) {
+			this._unit = Windspeed.SupportedUnits[0];
+		}
+		
+		const parsedValue = (typeof value === "number") ? value : parseFloat(value);
+		
+		if (this._unit === Windspeed.SupportedUnits[0]) this._kmh = (parsedValue * 1.852);
+		else if (this._unit === Windspeed.SupportedUnits[1]) this._kmh = (parsedValue * 3.6);
+		else if (this._unit === Windspeed.SupportedUnits[3]) this._kmh = (parsedValue * 1.60934);
+		else this._kmh = parsedValue;
+	}
+	
+	kmh() { return this._kmh; }
+}
+
+//---------------------------------------------------------------------------//
+
+class Temperature {
+	static SupportedUnits = [ "°C", "°F" ];
+
+	constructor(value, unit) {
+		this._unit = unit;
+		if (this._unit == null || !Temperature.SupportedUnits.includes(this._unit)) {
+			this._unit = Temperature.SupportedUnits[0];
+		}
+		
+		const parsedValue = (typeof value === "number") ? value : parseFloat(value);
+		
+		this._f = (this._unit === Temperature.SupportedUnits[0]) ? ((parsedValue * 1.8 + 32)) : parsedValue;
+		this._c = (this._unit === Temperature.SupportedUnits[1]) ? ((parsedValue - 32) / 1.8) : parsedValue;
+	}
+		
+	C() { return Math.round(this._c * 10) / 10; }	// Preserve one decimal precision
+	F() { return Math.round(this._f * 10) / 10; }
+	unit() { return this._unit; }
+	
+	toTargetUnit(unit) {
+		return (unit === Temperature.SupportedUnits[0]) ? this.C() : this.F();
+	}
+}
+
+//---------------------------------------------------------------------------//
+
+		</script>
+		
+	</body>
+</html>
